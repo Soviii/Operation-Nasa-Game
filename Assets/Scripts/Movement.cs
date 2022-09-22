@@ -6,6 +6,7 @@ public class Movement : MonoBehaviour
 {
     [SerializeField] float mainThrust = 100f;
     [SerializeField] float rotateSpeed = 100f;
+    [SerializeField] AudioClip engineSound;
     Rigidbody rocketRB;
     AudioSource rocketBoost;
 
@@ -53,7 +54,7 @@ public class Movement : MonoBehaviour
         if (Input.GetKey(KeyCode.Space)){
             rocketRB.AddRelativeForce(Vector3.up * mainThrust * Time.deltaTime);
             if (!rocketBoost.isPlaying){
-                rocketBoost.Play();
+                rocketBoost.PlayOneShot(engineSound);
             }
         } else {
             rocketBoost.Stop();
