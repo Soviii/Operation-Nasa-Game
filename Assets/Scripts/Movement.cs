@@ -1,12 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Movement : MonoBehaviour
 {
     [SerializeField] float mainThrust = 100f;
     [SerializeField] float rotateSpeed = 100f;
     [SerializeField] AudioClip engineSound;
+    [SerializeField] ParticleSystem leftThrusterParticles;
+    [SerializeField] ParticleSystem rightThrusterParticles;
+    [SerializeField] ParticleSystem boosterParticles;
+
     Rigidbody rocketRB;
     AudioSource rocketBoost;
 
@@ -20,52 +25,59 @@ public class Movement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        ProcessInput();
+        ForceNextLevel();
         ProcessRotation();
         ProcessThrust();
         ResetPosition();
     }
-
-    void ProcessInput(){
-
-        if(Input.GetKey(KeyCode.Space)){
-            Debug.Log("Whatup!");
+    void ForceNextLevel(){
+        if(Input.GetKeyDown(KeyCode.L)){
+            SceneManager.LoadScene((SceneManager.GetActiveScene().buildIndex+1)%SceneManager.sceneCountInBuildSettings);
         }
-
     }
 
     void ProcessRotation(){
 
-        if (Input.GetKey(KeyCode.A) && Input.GetKey(KeyCode.D)){
-            Debug.Log("go straight!");
+        if (Input.GetKey(KeyCode.A) && Input.GetKey(KeyCode.D))
+        {
+            BothThrustersOn();
         }
-        else if(Input.GetKey(KeyCode.A)){
+        else if(Input.GetKey(KeyCode.A))
+        {
+            LeftThrusterOn();
             ApplyRotation(rotateSpeed);
             //Debug.Log("to the left!");
         }
-        else if(Input.GetKey(KeyCode.D)){
+        else if(Input.GetKey(KeyCode.D))
+        {
+            RightThrusterOn();
             ApplyRotation(-rotateSpeed);
             //Debug.Log("to the right!");
-        }  
-
+        }
+        else
+        {
+            //* Turn off both thrusters
+            leftThrusterParticles.Stop();
+            rightThrusterParticles.Stop();
+        }
     }
-    
+
     void ProcessThrust() {
         if (Input.GetKey(KeyCode.Space)){
             rocketRB.AddRelativeForce(Vector3.up * mainThrust * Time.deltaTime);
+            
+            if (!boosterParticles.isPlaying){
+                boosterParticles.Play();
+            }
             if (!rocketBoost.isPlaying){
                 rocketBoost.PlayOneShot(engineSound);
             }
         } else {
             rocketBoost.Stop();
+            boosterParticles.Stop();
         }
     }
-
-    void ApplyRotation(float rotationThisFrame){
-        rocketRB.freezeRotation = true; //* freezing rotation so we can manually rotate (so physics does not fully take over)
-        transform.Rotate(Vector3.forward * rotationThisFrame * Time.deltaTime);
-        rocketRB.freezeRotation = false;
-    }
+    
     void ResetPosition(){
         if (Input.GetKey(KeyCode.R)){
             transform.eulerAngles = Vector3.zero;
@@ -73,5 +85,45 @@ public class Movement : MonoBehaviour
             transform.position = new Vector3(-14.9f, 1.65f, -0.01f);
         }
     }
+
+    void RightThrusterOn()
+    {
+        if (!rightThrusterParticles.isPlaying)
+        {
+            rightThrusterParticles.Play();
+        }
+        leftThrusterParticles.Stop();
+    }
+
+    void LeftThrusterOn()
+    {
+        if (!leftThrusterParticles.isPlaying)
+        {
+            leftThrusterParticles.Play();
+        }
+        rightThrusterParticles.Stop();
+    }
+
+    void BothThrustersOn()
+    {
+        if (!leftThrusterParticles.isPlaying)
+        {
+            leftThrusterParticles.Play();
+        }
+        else if (!rightThrusterParticles.isPlaying)
+        {
+            rightThrusterParticles.Play();
+        }
+        Debug.Log("go straight!");
+    }
+
+    
+
+    void ApplyRotation(float rotationThisFrame){
+        rocketRB.freezeRotation = true; //* freezing rotation so we can manually rotate (so physics does not fully take over when colliding)
+        transform.Rotate(Vector3.forward * rotationThisFrame * Time.deltaTime);
+        rocketRB.freezeRotation = false;
+    }
+
 
 }
